@@ -6,7 +6,7 @@ static class VectorMath
     {
         Vector2f diff = first - second;
 
-        return (diff.X * diff.X) + (diff.Y + diff.Y);
+        return (diff.X * diff.X) + (diff.Y * diff.Y);
     }
 
     public static float Dot(this Vector2f first, Vector2f second)
