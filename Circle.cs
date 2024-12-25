@@ -3,14 +3,14 @@ using SFML.System;
 
 class Circle
 {
-    private readonly int _radiusSquared;
+    private readonly int _radius;
     private Vector2f _position;
     private Vector2f _velocity;
     private CircleShape _shape;
 
     public Circle(int radius, Vector2f position, Vector2f velocity, Color color)
     {
-        _radiusSquared = radius * radius;
+        _radius = radius;
         _position = position;
         _velocity = velocity;
 
@@ -38,15 +38,21 @@ class Circle
             return;
 
         float distanceSquared = _position.DistanceSquaredTo(other._position);
+        float radiusesSum = _radius + other._radius;
         
-        if (distanceSquared > _radiusSquared + other._radiusSquared)
+        if (distanceSquared > radiusesSum * radiusesSum)
             return;
         
         float distance = float.Sqrt(distanceSquared);
         
-        Vector2f collisionNormal = (_position - other._position) / distance;
-        float force = _velocity.Dot(collisionNormal) - other._velocity.Dot(collisionNormal);
+        Vector2f collisionNormal = (other._position - _position) / distance;
 
+        float overlapDepth = distance - radiusesSum;
+        _position += collisionNormal * overlapDepth;
+        
+        float force = other._velocity.Dot(collisionNormal) - _velocity.Dot(collisionNormal);
+        
         _velocity += collisionNormal * force;
+        other._velocity += collisionNormal * -force;
     }
 }
