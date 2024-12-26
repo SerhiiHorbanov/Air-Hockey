@@ -5,17 +5,18 @@ class Circle
 {
     private readonly int _radius;
     private Vector2f _position;
-    private Vector2f _velocity;
+    public Vector2f Velocity;
     private CircleShape _shape;
 
     public Circle(int radius, Vector2f position, Vector2f velocity, Color color)
     {
         _radius = radius;
         _position = position;
-        _velocity = velocity;
+        Velocity = velocity;
 
         _shape = new(radius);
         _shape.FillColor = color;
+        _shape.Origin = new(radius, radius);
     }
 
     public void Draw(RenderTarget target)
@@ -24,19 +25,13 @@ class Circle
         _shape.Draw(target, RenderStates.Default);
     }
 
-    public void Update(params Circle[] circlesToCheckCollisions)
+    public void UpdateVelocity()
     {
-        foreach (Circle each in circlesToCheckCollisions)
-            CheckAndResolveCollision(each);
-        
-        _position += _velocity;
+        _position += Velocity;
     }
 
-    private void CheckAndResolveCollision(Circle other)
-    {   
-        if (ReferenceEquals(other, this))
-            return;
-
+    public void CheckAndResolveCollision(Circle other)
+    {
         float distanceSquared = _position.DistanceSquaredTo(other._position);
         float radiusesSum = _radius + other._radius;
         
@@ -50,9 +45,30 @@ class Circle
         float overlapDepth = distance - radiusesSum;
         _position += collisionNormal * overlapDepth;
         
-        float force = other._velocity.Dot(collisionNormal) - _velocity.Dot(collisionNormal);
+        float force = other.Velocity.Dot(collisionNormal) - Velocity.Dot(collisionNormal);
         
-        _velocity += collisionNormal * force;
-        other._velocity += collisionNormal * -force;
+        Velocity += collisionNormal * force;
+        other.Velocity += collisionNormal * -force;
+    }
+    
+    public void CheckAndResolveCollision(Rectangle rectangle)
+    {
+        Vector2f closestPoint = rectangle.GetClosestPointTo(_position);
+        Console.WriteLine(_position.ToString());
+        float distanceSquared = _position.DistanceSquaredTo(closestPoint);
+        
+        if (distanceSquared > _radius * _radius)
+            return;
+            
+        float distance = float.Sqrt(distanceSquared);
+        
+        Vector2f collisionNormal = (closestPoint - _position) / distance;
+        
+        float overlapDepth = distance - _radius;
+        _position += collisionNormal * overlapDepth;
+        
+        float force = -Velocity.Dot(collisionNormal) * 2;
+        
+        Velocity += collisionNormal * force;
     }
 }
