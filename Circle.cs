@@ -4,14 +4,14 @@ using SFML.System;
 class Circle
 {
     private readonly int _radius;
-    private Vector2f _position;
+    public Vector2f Position;
     public Vector2f Velocity;
     private CircleShape _shape;
 
     public Circle(int radius, Vector2f position, Vector2f velocity, Color color)
     {
         _radius = radius;
-        _position = position;
+        Position = position;
         Velocity = velocity;
 
         _shape = new(radius);
@@ -21,18 +21,18 @@ class Circle
 
     public void Draw(RenderTarget target)
     {
-        _shape.Position = _position;
+        _shape.Position = Position;
         _shape.Draw(target, RenderStates.Default);
     }
 
     public void UpdateVelocity()
     {
-        _position += Velocity;
+        Position += Velocity;
     }
 
     public void CheckAndResolveCollision(Circle other)
     {
-        float distanceSquaredToCenter = _position.DistanceSquaredTo(other._position);
+        float distanceSquaredToCenter = Position.DistanceSquaredTo(other.Position);
         float radiusesSum = _radius + other._radius;
         
         if (distanceSquaredToCenter > radiusesSum * radiusesSum)
@@ -40,38 +40,52 @@ class Circle
         
         float distanceToCenter = float.Sqrt(distanceSquaredToCenter);
 
-        Vector2f collisionPoint = (_position - other._position) / distanceToCenter;
+        Vector2f collisionPoint = (Position - other.Position) / distanceToCenter;
         collisionPoint *= other._radius;
-        collisionPoint += other._position;
+        collisionPoint += other.Position;
         float distanceToCollisionPoint = distanceToCenter - other._radius;
         
-        ResolveCollisionWithPoint(collisionPoint, other.Velocity, distanceToCollisionPoint);
+        ResolveCollisionWithPoint(collisionPoint, other.Velocity, distanceToCollisionPoint, 1.5f);
     }
 
-    private void ResolveCollisionWithPoint(Vector2f point, Vector2f velocity, float distance)
+    private void ResolveCollisionWithPoint(Vector2f point, Vector2f velocity, float distance, float bounce = 1)
     {
-        Vector2f collisionNormal = (point - _position) / distance;
+        if (distance <= 0)
+            return;
+        
+        Vector2f collisionNormal = (point - Position) / distance;
 
         float overlapDepth = distance - _radius;
-        _position += collisionNormal * overlapDepth;
+        Position += collisionNormal * overlapDepth;
 
         float force = velocity.Dot(collisionNormal) - Velocity.Dot(collisionNormal);
         
-        Velocity += collisionNormal * force;
+        Velocity += collisionNormal * force * bounce;
     }
 
-    private void ResolveCollisionWithPoint(Vector2f point, float distance)
-        => ResolveCollisionWithPoint(point, new(0, 0), distance);
+    private void ResolveCollisionWithPoint(Vector2f point, float distance, float bounce = 1)
+        => ResolveCollisionWithPoint(point, new(0, 0), distance, bounce);
     
     public void CheckAndResolveCollision(Rectangle rectangle)
     {
-        Vector2f closestPoint = rectangle.GetClosestPointTo(_position);
-        float distanceSquared = _position.DistanceSquaredTo(closestPoint);
+        Vector2f closestPoint = rectangle.GetClosestPointTo(Position);
+        float distanceSquared = Position.DistanceSquaredTo(closestPoint);
         
         if (distanceSquared > _radius * _radius)
             return;
 
+        if (distanceSquared <= 0)
+        {
+            Vector2f unclippingDirection = rectangle.GetClosestPointOnPerimeter(Position);
+            float unclippingLength = Position.DistanceTo(unclippingDirection);
+            unclippingDirection -= Position;
+            unclippingDirection /= unclippingLength;
+            unclippingLength += _radius;
+
+            Position += unclippingDirection * unclippingLength;
+        }
+            
         float distance = float.Sqrt(distanceSquared);
-        ResolveCollisionWithPoint(closestPoint, distance);
+        ResolveCollisionWithPoint(closestPoint, distance, 2);
     }
 }
