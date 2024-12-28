@@ -13,6 +13,9 @@ class Game
     private Circle _puck;
     private Circle _firstPlayerDisc;
     private Circle _secondPlayerDisc;
+    
+    private const int PuckRadius = 50;
+    private const int DiscsRadius = 50;
 
     private Vector2f _playerDiscWishedPosition;
 
@@ -53,10 +56,10 @@ class Game
         tableRightTop.Y -= tableSize.Y;
         _rightEdge = new (tableRightTop, tableSize, Color.Black);
 
-        _puck = new(50, new(115, 100), new(0, 1f), Color.Black);
+        _puck = new(PuckRadius, new(), new(), Color.Black);
         
-        _firstPlayerDisc = new(50, _tablePosition, new(0, 0), FirstPlayerColor);
-        _secondPlayerDisc = new(50, _tablePosition, new(0, 0), SecondPlayerColor);
+        _firstPlayerDisc = new(DiscsRadius, new(), new(), FirstPlayerColor);
+        _secondPlayerDisc = new(DiscsRadius, new(), new(), SecondPlayerColor);
         
         _firstPlayerScoreText = new();
         _secondPlayerScoreText = new();
