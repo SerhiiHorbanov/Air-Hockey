@@ -22,6 +22,10 @@ class Rectangle
         _shape.FillColor = color;
     }
 
+    public Rectangle(Vector2f leftTop, Vector2f rectangleSize, Color color) : 
+        this(new FloatRect(leftTop.X, leftTop.Y, rectangleSize.X, rectangleSize.Y), color)
+    { }
+
     public void Draw(RenderTarget target)
     {
         _shape.Position = _rect.Position;
