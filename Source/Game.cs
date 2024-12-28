@@ -58,8 +58,8 @@ class Game
 
         _puck = new(PuckRadius, new(), new(), Color.Black);
         
-        _firstPlayerDisc = new(DiscsRadius, new(), new(), FirstPlayerColor);
-        _secondPlayerDisc = new(DiscsRadius, new(), new(), SecondPlayerColor);
+        _firstPlayerDisc = new(DiscsRadius, FirstPlayerColor);
+        _secondPlayerDisc = new(DiscsRadius, SecondPlayerColor);
         
         _firstPlayerScoreText = new();
         _secondPlayerScoreText = new();

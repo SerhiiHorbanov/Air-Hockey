@@ -18,6 +18,9 @@ class Circle
         _shape.FillColor = color;
         _shape.Origin = new(radius, radius);
     }
+    
+    public Circle(int radius, Color color) : this(radius, new(0, 0), new(0, 0), color)
+    { }
 
     public void Draw(RenderTarget target)
     {
