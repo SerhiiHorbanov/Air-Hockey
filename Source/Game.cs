@@ -22,7 +22,6 @@ class Game
     private readonly Rectangle _leftEdge;
 
     private const float EdgeThickness = 1000;
-    private const float HalfEdgeThickness = EdgeThickness / 2;
 
     private int _firstPlayerScore;
     private int _secondPlayerScore;
@@ -60,7 +59,7 @@ class Game
         
         _scoresText = new();
         
-        _window = new(new (900, 900), "window");
+        _window = new(new (900, 900), "air hockey");
         
         ResetPuckAndDiscsPositionsAndVelocities();
     }
@@ -90,14 +89,28 @@ class Game
 
     private void Initialization()
     {
+        InitializeText();
+
+        _window.Closed += WindowClosed;
+    }
+
+    private void InitializeText()
+    {
         _scoresText.Position = _tablePosition - new Vector2f(_halfTableSize.X, 0);
         _scoresText.DisplayedString = "lorem ipsum";
         _scoresText.FillColor = Color.Black;
         _scoresText.CharacterSize = FontSize;
         
         _scoresText.Font = Arial;
+        UpdateScoresText();
     }
 
+    static void WindowClosed(object sender, EventArgs e)
+    {
+        RenderWindow w = (RenderWindow)sender;
+        w.Close();
+    }
+    
     private void Render()
     {
         _window.Clear(BackGroundColor);
@@ -121,7 +134,6 @@ class Game
     
     private void DrawScore()
     {
-        _scoresText.DisplayedString = _firstPlayerScore + "/" + _secondPlayerScore;
         _scoresText.Draw(_window, RenderStates.Default);
     }
 
@@ -181,15 +193,20 @@ class Game
     {
         if (_puck.Position.Y > _tablePosition.Y + _halfTableSize.Y)
         {
-            ResetPuckAndDiscsPositionsAndVelocities();
             _secondPlayerScore++;
+            UpdateScoresText();
+            ResetPuckAndDiscsPositionsAndVelocities();
         }
         else if (_puck.Position.Y < _tablePosition.Y - _halfTableSize.Y)
         {
-            ResetPuckAndDiscsPositionsAndVelocities();
             _firstPlayerScore++;
+            UpdateScoresText();
+            ResetPuckAndDiscsPositionsAndVelocities();
         }
     }
+
+    private void UpdateScoresText()
+        => _scoresText.DisplayedString = _firstPlayerScore + "/" + _secondPlayerScore;
     
     private bool GameContinues()
     {
