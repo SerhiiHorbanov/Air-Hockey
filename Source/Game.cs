@@ -10,7 +10,7 @@ class Game
     private readonly Vector2f _tablePosition;
     private readonly Vector2f _halfTableSize;
     
-    private Circle _puck = new(50, new(115, 100), new(0, 1f), Color.Black);
+    private Circle _puck;
     private Circle _firstPlayerDisc;
     private Circle _secondPlayerDisc;
 
@@ -37,14 +37,23 @@ class Game
 
     public Game() : this(new Vector2f(800, 900), new Vector2f(450, 450))
     { }
-    
-    public Game(Vector2f tableSize, Vector2f tablePosition)
+
+    private Game(Vector2f tableSize, Vector2f tablePosition)
     {
         _tablePosition = tablePosition;
         _halfTableSize = tableSize * 0.5f;
-        
-        _leftEdge = new (new(_tablePosition.X - _halfTableSize.X - EdgeThickness, _tablePosition.Y - _halfTableSize.Y - HalfEdgeThickness, EdgeThickness, tableSize.Y + EdgeThickness), Color.Black);
-        _rightEdge = new (new(_tablePosition.X + _halfTableSize.X, _tablePosition.Y - _halfTableSize.Y - HalfEdgeThickness, EdgeThickness, tableSize.Y + EdgeThickness), Color.Black);
+
+        Vector2f edgeSize = new(EdgeThickness, tableSize.Y + EdgeThickness);
+
+        Vector2f tableLeftTop = _tablePosition - _halfTableSize;
+        tableLeftTop.X -= EdgeThickness;
+        _leftEdge = new (tableLeftTop, edgeSize, Color.Black);
+
+        Vector2f tableRightTop = _tablePosition + _halfTableSize;
+        tableRightTop.Y -= tableSize.Y;
+        _rightEdge = new (tableRightTop, tableSize, Color.Black);
+
+        _puck = new(50, new(115, 100), new(0, 1f), Color.Black);
         
         _firstPlayerDisc = new(50, _tablePosition, new(0, 0), FirstPlayerColor);
         _secondPlayerDisc = new(50, _tablePosition, new(0, 0), SecondPlayerColor);
@@ -52,6 +61,8 @@ class Game
         _scoresText = new();
         
         _window = new(new (900, 900), "window");
+        
+        ResetPuckAndDiscsPositionsAndVelocities();
     }
 
     private void ResetPuckAndDiscsPositionsAndVelocities()
@@ -80,12 +91,11 @@ class Game
     private void Initialization()
     {
         _scoresText.Position = _tablePosition - new Vector2f(_halfTableSize.X, 0);
-        _scoresText.DisplayedString = "lorem";
+        _scoresText.DisplayedString = "lorem ipsum";
         _scoresText.FillColor = Color.Black;
         _scoresText.CharacterSize = FontSize;
         
         _scoresText.Font = Arial;
-        
     }
 
     private void Render()
@@ -100,16 +110,18 @@ class Game
     
     private void DrawObjects()
     {
-        _puck.Draw(_window);
         _firstPlayerDisc.Draw(_window);
         _secondPlayerDisc.Draw(_window);
+        
+        _puck.Draw(_window);
+        
         _rightEdge.Draw(_window);
         _leftEdge.Draw(_window);
     }
     
     private void DrawScore()
     {
-        _scoresText.DisplayedString = _firstPlayerScore.ToString() + "/" + _secondPlayerScore.ToString();
+        _scoresText.DisplayedString = _firstPlayerScore + "/" + _secondPlayerScore;
         _scoresText.Draw(_window, RenderStates.Default);
     }
 
@@ -122,14 +134,30 @@ class Game
     
     private void Update()
     {
-        
-        _firstPlayerDisc.Velocity = _firstPlayerDisc.Velocity.Lerp(_playerDiscWishedPosition - _firstPlayerDisc.Position, 0.5f);
-        
+        UpdateDiscsVelocities();
         UpdatePhysics();
 
         CheckAndResolveWinCondition();
     }
 
+    private void UpdateDiscsVelocities()
+    {
+        AccelerateDiscToPoint(ref _firstPlayerDisc, _playerDiscWishedPosition, 0.5f);
+        _firstPlayerDisc.Velocity = _firstPlayerDisc.Velocity.Lerp(_playerDiscWishedPosition - _firstPlayerDisc.Position, 0.5f);
+
+        bool isPuckInSecondPlayersHalf = _puck.Position.Y < _tablePosition.Y;
+        
+        Vector2f secondDiscWishedPosition = isPuckInSecondPlayersHalf ? _puck.Position : new(_puck.Position.X, 100);
+        float speed = isPuckInSecondPlayersHalf ? 0.05f : 0.1f;
+        
+        AccelerateDiscToPoint(ref _secondPlayerDisc, secondDiscWishedPosition, speed);
+    }
+
+    private void AccelerateDiscToPoint(ref Circle acceleratingDisc, Vector2f acceleratingToPosition, float interpolation)
+    {
+        acceleratingDisc.Velocity = acceleratingDisc.Velocity.Lerp(acceleratingToPosition - acceleratingDisc.Position, interpolation);
+    }
+    
     private void UpdatePhysics()
     {
         UpdateDiscPhysics(_firstPlayerDisc);
