@@ -16,7 +16,7 @@ class Game
 
     private Vector2f _playerDiscWishedPosition;
 
-    private static readonly Vector2f _relativeToPuckResettingDiscsPosition = new (0, 350);
+    private static readonly Vector2f RelativeToPuckResettingDiscsPosition = new (0, 350);
     
     private readonly Rectangle _rightEdge;
     private readonly Rectangle _leftEdge;
@@ -34,6 +34,9 @@ class Game
 
     private const int FontSize = 36;
     private static readonly Font Arial = new("C:/Windows/Fonts/arial.ttf");
+
+    public Game() : this(new Vector2f(800, 900), new Vector2f(450, 450))
+    { }
     
     public Game(Vector2f tableSize, Vector2f tablePosition)
     {
@@ -54,8 +57,8 @@ class Game
     private void ResetPuckAndDiscsPositionsAndVelocities()
     {
         _puck.Position = _tablePosition;
-        _firstPlayerDisc.Position = _puck.Position + _relativeToPuckResettingDiscsPosition;
-        _secondPlayerDisc.Position = _puck.Position - _relativeToPuckResettingDiscsPosition;
+        _firstPlayerDisc.Position = _puck.Position + RelativeToPuckResettingDiscsPosition;
+        _secondPlayerDisc.Position = _puck.Position - RelativeToPuckResettingDiscsPosition;
         
         _puck.Velocity = new(0, 0);
         _firstPlayerDisc.Velocity = new(0, 0);
