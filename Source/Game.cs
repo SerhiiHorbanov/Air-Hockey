@@ -29,7 +29,8 @@ class Game
     private static readonly Color FirstPlayerColor = Color.Red;
     private static readonly Color SecondPlayerColor = Color.Blue;
     
-    private Text _scoresText;
+    private Text _firstPlayerScoreText;
+    private Text _secondPlayerScoreText;
 
     private const int FontSize = 36;
     private static readonly Font Arial = new("C:/Windows/Fonts/arial.ttf");
@@ -57,22 +58,12 @@ class Game
         _firstPlayerDisc = new(50, _tablePosition, new(0, 0), FirstPlayerColor);
         _secondPlayerDisc = new(50, _tablePosition, new(0, 0), SecondPlayerColor);
         
-        _scoresText = new();
+        _firstPlayerScoreText = new();
+        _secondPlayerScoreText = new();
         
         _window = new(new (900, 900), "air hockey");
         
         ResetPuckAndDiscsPositionsAndVelocities();
-    }
-
-    private void ResetPuckAndDiscsPositionsAndVelocities()
-    {
-        _puck.Position = _tablePosition;
-        _firstPlayerDisc.Position = _puck.Position + RelativeToPuckResettingDiscsPosition;
-        _secondPlayerDisc.Position = _puck.Position - RelativeToPuckResettingDiscsPosition;
-        
-        _puck.Velocity = new(0, 0);
-        _firstPlayerDisc.Velocity = new(0, 0);
-        _secondPlayerDisc.Velocity = new(0, 0);
     }
     
     public void Run()
@@ -89,20 +80,25 @@ class Game
 
     private void Initialization()
     {
-        InitializeText();
+        InitializeScoreTexts();
 
         _window.Closed += WindowClosed;
     }
 
-    private void InitializeText()
+    private void InitializeScoreTexts()
     {
-        _scoresText.Position = _tablePosition - new Vector2f(_halfTableSize.X, 0);
-        _scoresText.DisplayedString = "lorem ipsum";
-        _scoresText.FillColor = Color.Black;
-        _scoresText.CharacterSize = FontSize;
+        SetupScoreText(ref _firstPlayerScoreText, FirstPlayerColor);
+        SetupScoreText(ref _secondPlayerScoreText, SecondPlayerColor, -FontSize);
+    }
+
+    private void SetupScoreText(ref Text scoreText, Color color, float y = 0)
+    {
+        scoreText.Position = _tablePosition - new Vector2f(_halfTableSize.X, y);
+        scoreText.DisplayedString = "0";
+        scoreText.FillColor = color;
+        scoreText.CharacterSize = FontSize;
         
-        _scoresText.Font = Arial;
-        UpdateScoresText();
+        scoreText.Font = Arial;
     }
 
     static void WindowClosed(object sender, EventArgs e)
@@ -134,7 +130,8 @@ class Game
     
     private void DrawScore()
     {
-        _scoresText.Draw(_window, RenderStates.Default);
+        _firstPlayerScoreText.Draw(_window, RenderStates.Default);
+        _secondPlayerScoreText.Draw(_window, RenderStates.Default);
     }
 
     private void Input()
@@ -194,19 +191,29 @@ class Game
         if (_puck.Position.Y > _tablePosition.Y + _halfTableSize.Y)
         {
             _secondPlayerScore++;
-            UpdateScoresText();
+            _secondPlayerScoreText.DisplayedString = _secondPlayerScore.ToString();
             ResetPuckAndDiscsPositionsAndVelocities();
+            return;
         }
-        else if (_puck.Position.Y < _tablePosition.Y - _halfTableSize.Y)
-        {
-            _firstPlayerScore++;
-            UpdateScoresText();
-            ResetPuckAndDiscsPositionsAndVelocities();
-        }
+        
+        if (_puck.Position.Y > _tablePosition.Y - _halfTableSize.Y) 
+            return;
+        
+        _firstPlayerScore++;
+        _firstPlayerScoreText.DisplayedString = _firstPlayerScore.ToString();
+        ResetPuckAndDiscsPositionsAndVelocities();
     }
-
-    private void UpdateScoresText()
-        => _scoresText.DisplayedString = _firstPlayerScore + "/" + _secondPlayerScore;
+    
+    private void ResetPuckAndDiscsPositionsAndVelocities()
+    {
+        _puck.Position = _tablePosition;
+        _firstPlayerDisc.Position = _puck.Position + RelativeToPuckResettingDiscsPosition;
+        _secondPlayerDisc.Position = _puck.Position - RelativeToPuckResettingDiscsPosition;
+        
+        _puck.Velocity = new(0, 0);
+        _firstPlayerDisc.Velocity = new(0, 0);
+        _secondPlayerDisc.Velocity = new(0, 0);
+    }
     
     private bool GameContinues()
     {
