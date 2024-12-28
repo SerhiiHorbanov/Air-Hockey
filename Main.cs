@@ -1,1 +1,1 @@
-﻿new Game().Run();
+﻿new Game(new(800, 900), new(450, 450)).Run();
