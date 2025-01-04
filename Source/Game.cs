@@ -2,13 +2,13 @@ using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 
-class Game
+internal class Game
 {
     private RenderWindow _window;
     private static readonly Color BackGroundColor = Color.White;
     
     private readonly Vector2f _tablePosition;
-    private readonly Vector2f _halfTableSize;
+    private readonly Vector2f _tableSize;
     
     private Circle _puck;
     private Circle _firstPlayerDisc;
@@ -21,8 +21,8 @@ class Game
 
     private static readonly Vector2f RelativeToPuckResettingDiscsPosition = new (0, 350);
     
-    private readonly Rectangle _rightEdge;
-    private readonly Rectangle _leftEdge;
+    private Rectangle _rightEdge;
+    private Rectangle _leftEdge;
 
     private const float EdgeThickness = 1000;
 
@@ -38,35 +38,18 @@ class Game
     private const int FontSize = 36;
     private static readonly Font Arial = new("C:/Windows/Fonts/arial.ttf");
 
-    public Game() : this(new Vector2f(800, 900), new Vector2f(450, 450))
+    private float _deltaSeconds = 1.0f / TargetFps;
+    private long _lastTimingTick;
+    private const int TargetFps = 60;
+    private const long TicksBetweenFrames = TimeSpan.TicksPerSecond / TargetFps;
+    
+    public Game() : this(new Vector2f(450, 450), new Vector2f(800, 900))
     { }
 
-    private Game(Vector2f tableSize, Vector2f tablePosition)
+    private Game(Vector2f tablePosition, Vector2f tableSize)
     {
+        _tableSize = tableSize;
         _tablePosition = tablePosition;
-        _halfTableSize = tableSize * 0.5f;
-
-        Vector2f edgeSize = new(EdgeThickness, tableSize.Y + EdgeThickness);
-
-        Vector2f tableLeftTop = _tablePosition - _halfTableSize;
-        tableLeftTop.X -= EdgeThickness;
-        _leftEdge = new (tableLeftTop, edgeSize, Color.Black);
-
-        Vector2f tableRightTop = _tablePosition + _halfTableSize;
-        tableRightTop.Y -= tableSize.Y;
-        _rightEdge = new (tableRightTop, tableSize, Color.Black);
-
-        _puck = new(PuckRadius, new(), new(), Color.Black);
-        
-        _firstPlayerDisc = new(DiscsRadius, FirstPlayerColor);
-        _secondPlayerDisc = new(DiscsRadius, SecondPlayerColor);
-        
-        _firstPlayerScoreText = new();
-        _secondPlayerScoreText = new();
-        
-        _window = new(new (900, 900), "air hockey");
-        
-        ResetPuckAndDiscsPositionsAndVelocities();
     }
     
     public void Run()
@@ -77,26 +60,59 @@ class Game
             Render();
             Input();
             Update();
-            Thread.Sleep(16);
+            Timing();
         }
     }
 
+    private bool GameContinues()
+    {
+        return _window.IsOpen;
+    }
+    
     private void Initialization()
     {
-        InitializeScoreTexts();
+        InitializeTable();
+        InitializeUI();
+        
+        _lastTimingTick = DateTime.Now.Ticks;
 
+        _window = new(new (900, 900), "air hockey");
         _window.Closed += WindowClosed;
     }
 
-    private void InitializeScoreTexts()
+    private void InitializeTable()
     {
+        Vector2f halfTableSize = _tableSize * 0.5f;
+        Vector2f edgeSize = new(EdgeThickness, _tableSize.Y + EdgeThickness);
+
+        Vector2f tableLeftTop = _tablePosition - halfTableSize;
+        tableLeftTop.X -= EdgeThickness;
+        _leftEdge = new (tableLeftTop, edgeSize, Color.Black);
+
+        Vector2f tableRightTop = _tablePosition + halfTableSize;
+        tableRightTop.Y -= _tableSize.Y + EdgeThickness / 2;
+        _rightEdge = new (tableRightTop, edgeSize, Color.Black);
+
+        _puck = new(PuckRadius, new(), new(), Color.Black);
+        
+        _firstPlayerDisc = new(DiscsRadius, FirstPlayerColor);
+        _secondPlayerDisc = new(DiscsRadius, SecondPlayerColor);
+        
+        ResetPuckAndDiscsPositionsAndVelocities();
+    }
+
+    private void InitializeUI()
+    {
+        _firstPlayerScoreText = new();
+        _secondPlayerScoreText = new();
+        
         SetupScoreText(ref _firstPlayerScoreText, FirstPlayerColor);
         SetupScoreText(ref _secondPlayerScoreText, SecondPlayerColor, -FontSize);
     }
 
     private void SetupScoreText(ref Text scoreText, Color color, float y = 0)
     {
-        scoreText.Position = _tablePosition - new Vector2f(_halfTableSize.X, y);
+        scoreText.Position = _tablePosition - new Vector2f(_tableSize.X * 0.5f, y);
         scoreText.DisplayedString = "0";
         scoreText.FillColor = color;
         scoreText.CharacterSize = FontSize;
@@ -104,10 +120,10 @@ class Game
         scoreText.Font = Arial;
     }
 
-    static void WindowClosed(object sender, EventArgs e)
+    private void WindowClosed(object sender, EventArgs e)
     {
-        RenderWindow w = (RenderWindow)sender;
-        w.Close();
+        RenderWindow window = (RenderWindow)sender;
+        window.Close();
     }
     
     private void Render()
@@ -191,7 +207,7 @@ class Game
 
     private void CheckAndResolveWinCondition()
     {
-        if (_puck.Position.Y > _tablePosition.Y + _halfTableSize.Y)
+        if (_puck.Position.Y > _tablePosition.Y + _tableSize.Y * 0.5f)
         {
             _secondPlayerScore++;
             _secondPlayerScoreText.DisplayedString = _secondPlayerScore.ToString();
@@ -199,7 +215,7 @@ class Game
             return;
         }
         
-        if (_puck.Position.Y > _tablePosition.Y - _halfTableSize.Y) 
+        if (_puck.Position.Y > _tablePosition.Y - _tableSize.Y * 0.5f) 
             return;
         
         _firstPlayerScore++;
@@ -217,9 +233,15 @@ class Game
         _firstPlayerDisc.Velocity = new(0, 0);
         _secondPlayerDisc.Velocity = new(0, 0);
     }
-    
-    private bool GameContinues()
+
+    private void Timing()
     {
-        return _window.IsOpen;
+        long ticksToSleep = TicksBetweenFrames - (DateTime.Now.Ticks - _lastTimingTick);
+
+        _deltaSeconds = (float)(DateTime.Now.Ticks - _lastTimingTick) / TimeSpan.TicksPerSecond;
+        _lastTimingTick = DateTime.Now.Ticks;
+        
+        if (ticksToSleep > 0)
+            Thread.Sleep((int)(ticksToSleep / TimeSpan.TicksPerMillisecond));
     }
 }
