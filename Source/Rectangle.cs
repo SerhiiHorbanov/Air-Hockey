@@ -36,16 +36,10 @@ class Rectangle
     public Vector2f GetClosestPointTo(Vector2f position)
         => VectorMath.Clamp(position, _rect);
 
-    bool IsXInside(float x)
-        => x > Left && x < Right;
-    bool IsYInside(float y)
-        => y > Top && y < Bottom;
-    bool IsInside(Vector2f point)
-        => IsXInside(point.X) && IsYInside(point.Y);
     
     public Vector2f GetClosestPointOnPerimeter(Vector2f position)
     {
-        if (!IsInside(position))
+        if (!_rect.Contains(position.X, position.Y))
             return GetClosestPointTo(position);
         
         Vector2f closestOnLeft = new(Left, position.Y);
