@@ -42,6 +42,7 @@ internal class Game
     private long _lastTimingTick;
     private const int TargetFps = 60;
     private const long TicksBetweenFrames = TimeSpan.TicksPerSecond / TargetFps;
+    private const float SecondsBetweenFrames = 1.0f / TargetFps;
     
     public Game() : this(new Vector2f(450, 450), new Vector2f(800, 900))
     { }
@@ -176,14 +177,15 @@ internal class Game
         bool isPuckInSecondPlayersHalf = _puck.Position.Y < _tablePosition.Y;
         
         Vector2f secondDiscWishedPosition = isPuckInSecondPlayersHalf ? _puck.Position : new(_puck.Position.X, 100);
-        float speed = isPuckInSecondPlayersHalf ? 0.05f : 0.1f;
         
-        AccelerateDiscToPoint(ref _secondPlayerDisc, secondDiscWishedPosition, speed);
+        AccelerateDiscToPoint(ref _secondPlayerDisc, secondDiscWishedPosition, 0.4f);
     }
 
     private void AccelerateDiscToPoint(ref Circle acceleratingDisc, Vector2f acceleratingToPosition, float interpolation)
     {
-        acceleratingDisc.Velocity = acceleratingDisc.Velocity.Lerp(acceleratingToPosition - acceleratingDisc.Position, interpolation);
+        float resultInterpolation = interpolation * _deltaSeconds / SecondsBetweenFrames;
+        
+        acceleratingDisc.Velocity = acceleratingDisc.Velocity.Lerp(acceleratingToPosition - acceleratingDisc.Position, resultInterpolation);
     }
     
     private void UpdatePhysics()
@@ -191,7 +193,7 @@ internal class Game
         UpdateDiscPhysics(_firstPlayerDisc);
         UpdateDiscPhysics(_secondPlayerDisc);
         
-        _puck.UpdateVelocity();
+        _puck.UpdateVelocity(_deltaSeconds);
         _puck.CheckAndResolveCollision(_firstPlayerDisc);
         _puck.CheckAndResolveCollision(_secondPlayerDisc);
         _puck.CheckAndResolveCollision(_rightEdge);
@@ -200,7 +202,7 @@ internal class Game
 
     private void UpdateDiscPhysics(Circle disc)
     {
-        disc.UpdateVelocity();
+        disc.UpdateVelocity(_deltaSeconds);
         disc.CheckAndResolveCollision(_rightEdge);
         disc.CheckAndResolveCollision(_leftEdge);
     }

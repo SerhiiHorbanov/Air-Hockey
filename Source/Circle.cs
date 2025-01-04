@@ -28,9 +28,9 @@ class Circle
         _shape.Draw(target, RenderStates.Default);
     }
 
-    public void UpdateVelocity()
+    public void UpdateVelocity(float deltaSeconds)
     {
-        Position += Velocity;
+        Position += Velocity * deltaSeconds;
     }
 
     public void CheckAndResolveCollision(Circle other)
