@@ -37,12 +37,6 @@ internal class Game
 
     private const int FontSize = 36;
     private static readonly Font Arial = new("C:/Windows/Fonts/arial.ttf");
-
-    private float _deltaSeconds = 1.0f / TargetFps;
-    private long _lastTimingTick;
-    private const int TargetFps = 60;
-    private const long TicksBetweenFrames = TimeSpan.TicksPerSecond / TargetFps;
-    private const float SecondsBetweenFrames = 1.0f / TargetFps;
     
     public Game() : this(new Vector2f(450, 450), new Vector2f(800, 900))
     { }
@@ -61,7 +55,7 @@ internal class Game
             Render();
             Input();
             Update();
-            Timing();
+            FrameTiming.Timing();
         }
     }
 
@@ -75,7 +69,7 @@ internal class Game
         InitializeTable();
         InitializeUI();
         
-        _lastTimingTick = DateTime.Now.Ticks;
+        FrameTiming.UpdateLastTimingTick();
 
         _window = new(new (900, 900), "air hockey");
         _window.Closed += WindowClosed;
@@ -183,7 +177,7 @@ internal class Game
 
     private void AccelerateDiscToPoint(ref Circle acceleratingDisc, Vector2f acceleratingToPosition, float interpolation)
     {
-        float resultInterpolation = interpolation * _deltaSeconds / SecondsBetweenFrames;
+        float resultInterpolation = interpolation * FrameTiming.DeltaSeconds / FrameTiming.TargetDeltaSeconds;
         
         acceleratingDisc.Velocity = acceleratingDisc.Velocity.Lerp(acceleratingToPosition - acceleratingDisc.Position, resultInterpolation);
     }
@@ -193,7 +187,7 @@ internal class Game
         UpdateDiscPhysics(_firstPlayerDisc);
         UpdateDiscPhysics(_secondPlayerDisc);
         
-        _puck.UpdateVelocity(_deltaSeconds);
+        _puck.UpdateVelocity(FrameTiming.DeltaSeconds);
         _puck.CheckAndResolveCollision(_firstPlayerDisc);
         _puck.CheckAndResolveCollision(_secondPlayerDisc);
         _puck.CheckAndResolveCollision(_rightEdge);
@@ -202,7 +196,7 @@ internal class Game
 
     private void UpdateDiscPhysics(Circle disc)
     {
-        disc.UpdateVelocity(_deltaSeconds);
+        disc.UpdateVelocity(FrameTiming.DeltaSeconds);
         disc.CheckAndResolveCollision(_rightEdge);
         disc.CheckAndResolveCollision(_leftEdge);
     }
@@ -234,16 +228,5 @@ internal class Game
         _puck.Velocity = new(0, 0);
         _firstPlayerDisc.Velocity = new(0, 0);
         _secondPlayerDisc.Velocity = new(0, 0);
-    }
-
-    private void Timing()
-    {
-        long ticksToSleep = TicksBetweenFrames - (DateTime.Now.Ticks - _lastTimingTick);
-
-        _deltaSeconds = (float)(DateTime.Now.Ticks - _lastTimingTick) / TimeSpan.TicksPerSecond;
-        _lastTimingTick = DateTime.Now.Ticks;
-        
-        if (ticksToSleep > 0)
-            Thread.Sleep((int)(ticksToSleep / TimeSpan.TicksPerMillisecond));
     }
 }
