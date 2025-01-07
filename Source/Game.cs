@@ -17,8 +17,6 @@ internal class Game
     private const int PuckRadius = 50;
     private const int DiscsRadius = 50;
 
-    private Vector2f _playerDiscWishedPosition;
-
     private static readonly Vector2f RelativeToPuckResettingDiscsPosition = new (0, 350);
     
     private Rectangle _rightEdge;
@@ -53,7 +51,7 @@ internal class Game
         while (GameContinues())
         {
             Render();
-            Input();
+            UpdateInput();
             Update();
             FrameTiming.Timing();
         }
@@ -148,11 +146,9 @@ internal class Game
         _secondPlayerScoreText.Draw(_window, RenderStates.Default);
     }
 
-    private void Input()
+    private void UpdateInput()
     {
-        _window.DispatchEvents();
-        
-        _playerDiscWishedPosition = (Vector2f)(Mouse.GetPosition() - _window.Position);
+        Input.ProcessInput(_window);
     }
     
     private void Update()
@@ -165,8 +161,7 @@ internal class Game
 
     private void UpdateDiscsVelocities()
     {
-        AccelerateDiscToPoint(ref _firstPlayerDisc, _playerDiscWishedPosition, 0.5f);
-        _firstPlayerDisc.Velocity = _firstPlayerDisc.Velocity.Lerp(_playerDiscWishedPosition - _firstPlayerDisc.Position, 0.5f);
+        AccelerateDiscToPoint(ref _firstPlayerDisc, (Vector2f)Input.MousePositionOnWindow, 0.5f);
 
         bool isPuckInSecondPlayersHalf = _puck.Position.Y < _tablePosition.Y;
         
